@@ -19,14 +19,10 @@ pub fn can_construct_note(magazine: &[&str], note: &[&str]) -> bool {
     }
 
     note.iter().all(|word| {
-        let m_count = magazine_dic.get(word);
-
-        match m_count {
-            Some(m_count) => {
-                let n_count = note_dic.get(word).unwrap_or(&0);
-                m_count >= n_count
-            }
-            None => false,
-        }
+        let n_count = note_dic.get(word).unwrap_or(&0);
+        if magazine_dic.get(word).is_none() {
+            return false;
+        };
+        magazine_dic.get(word).unwrap_or(&0) >= n_count
     })
 }
