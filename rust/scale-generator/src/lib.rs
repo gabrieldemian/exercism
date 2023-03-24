@@ -28,15 +28,16 @@ impl Scale {
 
         println!("tonic i {tonic_i}");
 
-        intervals.chars().enumerate().for_each(|(i, v)| {
+        intervals.chars().fold(tonic_i, |acc, v| {
             let interval = match v {
                 'm' => 1,
                 'M' => 2,
                 _ => 0,
             };
-            println!("interval {interval}");
-            let note_i = (tonic_i + interval + i + 1) % CHROMATIC.len();
+            let note_i = (acc + interval) % CHROMATIC.len();
+            println!("note_i {note_i}");
             scale.push(CHROMATIC[note_i].to_string());
+            return note_i;
         });
 
         Ok(Self(scale))
