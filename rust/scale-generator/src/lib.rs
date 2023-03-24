@@ -14,16 +14,45 @@ pub struct Error;
 
 pub struct Scale(Vec<String>);
 
-const CHROMATIC: [&str; 12] = [
+const CHROMATIC_SHARP: [&str; 12] = [
     "A", "A#", "B", "C", "C#", "D", "D#", "E", "F", "F#", "G", "G#",
 ];
 
+const CHROMATIC_FLAT: [&str; 12] = [
+    "A", "Bb", "B", "C", "Db", "D", "Eb", "E", "F", "Gb", "G", "Ab",
+];
+
+fn capitalize(s: &str) -> String {
+    let mut c = s.chars();
+    match c.next() {
+        None => String::new(),
+        Some(f) => f.to_uppercase().collect::<String>() + c.as_str(),
+    }
+}
+
 impl Scale {
     pub fn new(tonic: &str, intervals: &str) -> Result<Scale, Error> {
-        let mut scale = vec![tonic.to_string().to_uppercase()];
-        let tonic_i = CHROMATIC
+        let is_sharp = match tonic {
+            "G" | "D" | "A" | "E" | "B" | "F#" | "e" | "b" | "f#" | "c#" | "C" | "a" => true,
+            _ => false,
+        };
+        let chromatic = if is_sharp {
+            CHROMATIC_SHARP
+        } else {
+            CHROMATIC_FLAT
+        };
+
+        let tonic = if is_sharp {
+            tonic.to_string().to_uppercase()
+        } else {
+            tonic.to_string()
+        };
+
+        let mut scale = vec![capitalize(&tonic.clone())];
+
+        let tonic_i = chromatic
             .into_iter()
-            .position(|v| v == tonic.to_uppercase())
+            .position(|v| v == capitalize(&tonic))
             .unwrap();
 
         println!("tonic i {tonic_i}");
@@ -32,11 +61,12 @@ impl Scale {
             let interval = match v {
                 'm' => 1,
                 'M' => 2,
+                'A' => 3,
                 _ => 0,
             };
-            let note_i = (acc + interval) % CHROMATIC.len();
+            let note_i = (acc + interval) % chromatic.len();
             println!("note_i {note_i}");
-            scale.push(CHROMATIC[note_i].to_string());
+            scale.push(chromatic[note_i].to_string());
             return note_i;
         });
 
@@ -44,13 +74,19 @@ impl Scale {
     }
 
     pub fn chromatic(tonic: &str) -> Result<Scale, Error> {
-        let tonic_i = CHROMATIC.into_iter().position(|v| v == tonic).unwrap_or(0);
+        let chromatic = match tonic {
+            "G" | "D" | "A" | "E" | "B" | "F#" | "e" | "b" | "f#" | "c#" | "C" | "a" => {
+                CHROMATIC_SHARP
+            }
+            _ => CHROMATIC_FLAT,
+        };
+        let tonic_i = chromatic.into_iter().position(|v| v == tonic).unwrap_or(0);
         let mut scale = vec!["".to_string(); 13];
 
-        CHROMATIC
+        chromatic
             .into_iter()
             .skip(tonic_i)
-            .chain(CHROMATIC.into_iter().take(tonic_i + 1))
+            .chain(chromatic.into_iter().take(tonic_i + 1))
             .enumerate()
             .for_each(|(i, v)| scale[i] = v.to_string());
 
