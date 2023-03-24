@@ -32,30 +32,16 @@ fn capitalize(s: &str) -> String {
 
 impl Scale {
     pub fn new(tonic: &str, intervals: &str) -> Result<Scale, Error> {
-        let is_sharp = match tonic {
-            "G" | "D" | "A" | "E" | "B" | "F#" | "e" | "b" | "f#" | "c#" | "C" | "a" => true,
-            _ => false,
-        };
-        let chromatic = if is_sharp {
-            CHROMATIC_SHARP
-        } else {
-            CHROMATIC_FLAT
+        let chromatic = match tonic {
+            "G" | "D" | "A" | "E" | "B" | "F#" | "e" | "b" | "f#" | "c#" | "C" | "a" => {
+                CHROMATIC_SHARP
+            }
+            _ => CHROMATIC_FLAT,
         };
 
-        let tonic = if is_sharp {
-            tonic.to_string().to_uppercase()
-        } else {
-            tonic.to_string()
-        };
-
-        let mut scale = vec![capitalize(&tonic.clone())];
-
-        let tonic_i = chromatic
-            .into_iter()
-            .position(|v| v == capitalize(&tonic))
-            .unwrap();
-
-        println!("tonic i {tonic_i}");
+        let tonic = capitalize(&tonic.to_string());
+        let mut scale = vec![tonic.clone()];
+        let tonic_i = chromatic.into_iter().position(|v| v == tonic).unwrap();
 
         intervals.chars().fold(tonic_i, |acc, v| {
             let interval = match v {
@@ -65,7 +51,6 @@ impl Scale {
                 _ => 0,
             };
             let note_i = (acc + interval) % chromatic.len();
-            println!("note_i {note_i}");
             scale.push(chromatic[note_i].to_string());
             return note_i;
         });
