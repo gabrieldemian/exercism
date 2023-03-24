@@ -22,14 +22,6 @@ const CHROMATIC_FLAT: [&str; 12] = [
     "A", "Bb", "B", "C", "Db", "D", "Eb", "E", "F", "Gb", "G", "Ab",
 ];
 
-fn capitalize(s: &str) -> String {
-    let mut c = s.chars();
-    match c.next() {
-        None => String::new(),
-        Some(f) => f.to_uppercase().collect::<String>() + c.as_str(),
-    }
-}
-
 impl Scale {
     pub fn new(tonic: &str, intervals: &str) -> Result<Scale, Error> {
         let chromatic = match tonic {
@@ -39,43 +31,27 @@ impl Scale {
             _ => CHROMATIC_FLAT,
         };
 
-        let tonic = capitalize(&tonic.to_string());
-        let mut scale = vec![tonic.clone()];
-        let tonic_i = chromatic.into_iter().position(|v| v == tonic).unwrap();
+        let mut pos = chromatic
+            .iter()
+            .position(|&n| n.to_uppercase() == tonic.to_uppercase())
+            .unwrap();
+        let mut scale = vec![chromatic[pos].to_string()];
 
-        intervals.chars().fold(tonic_i, |acc, v| {
-            let interval = match v {
+        for interval in intervals.chars() {
+            pos += match interval {
                 'm' => 1,
                 'M' => 2,
                 'A' => 3,
                 _ => 0,
             };
-            let note_i = (acc + interval) % chromatic.len();
-            scale.push(chromatic[note_i].to_string());
-            return note_i;
-        });
+            scale.push(chromatic[pos % chromatic.len()].to_string());
+        }
 
         Ok(Self(scale))
     }
 
     pub fn chromatic(tonic: &str) -> Result<Scale, Error> {
-        let chromatic = match tonic {
-            "G" | "D" | "A" | "E" | "B" | "F#" | "e" | "b" | "f#" | "c#" | "C" | "a" => {
-                CHROMATIC_SHARP
-            }
-            _ => CHROMATIC_FLAT,
-        };
-        let tonic_i = chromatic.into_iter().position(|v| v == tonic).unwrap_or(0);
-        let mut scale = vec!["".to_string(); 13];
-
-        chromatic
-            .into_iter()
-            .skip(tonic_i)
-            .chain(chromatic.into_iter().take(tonic_i + 1))
-            .enumerate()
-            .for_each(|(i, v)| scale[i] = v.to_string());
-
-        Ok(Self(scale))
+        Self::new(tonic, "mmmmmmmmmmmm")
     }
 
     pub fn enumerate(&self) -> Vec<String> {
