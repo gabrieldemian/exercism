@@ -12,10 +12,7 @@
 #[derive(Debug)]
 pub struct Error;
 
-pub struct Scale {
-    tonic: String,
-    scale: Vec<String>,
-}
+pub struct Scale([&'static str; 13]);
 
 const CHROMATIC: [&str; 12] = [
     "A", "A#", "B", "C", "C#", "D", "D#", "E", "F", "F#", "G", "G#",
@@ -23,7 +20,9 @@ const CHROMATIC: [&str; 12] = [
 
 impl Scale {
     pub fn new(tonic: &str, intervals: &str) -> Result<Scale, Error> {
-        let tonic_i = CHROMATIC.into_iter().position(|v| v == tonic).unwrap();
+        let tonic_i = CHROMATIC.into_iter().position(|v| v == tonic).unwrap_or(0);
+        let mut scale = [""; 13];
+
         let intervals: Vec<usize> = intervals
             .chars()
             .map(|c| match c {
@@ -33,25 +32,24 @@ impl Scale {
             })
             .collect();
 
-        let scale: Vec<String> = intervals
-            .into_iter()
-            .map(|n| {
-                let note_i = (tonic_i + n) % CHROMATIC.len();
-                CHROMATIC.get(note_i).unwrap().to_string()
-            })
-            .collect();
-
-        Ok(Scale {
-            tonic: tonic.to_string(),
-            scale,
-        })
+        Ok(Self(scale))
     }
 
     pub fn chromatic(tonic: &str) -> Result<Scale, Error> {
-        unimplemented!("Construct a new chromatic scale with tonic {tonic}")
+        let tonic_i = CHROMATIC.into_iter().position(|v| v == tonic).unwrap_or(0);
+        let mut scale = [""; 13];
+
+        CHROMATIC
+            .into_iter()
+            .skip(tonic_i)
+            .chain(CHROMATIC.into_iter().take(tonic_i + 1))
+            .enumerate()
+            .for_each(|(i, v)| scale[i] = v);
+
+        Ok(Self(scale))
     }
 
     pub fn enumerate(&self) -> Vec<String> {
-        unimplemented!()
+        self.0.into_iter().map(|x| x.to_string()).collect()
     }
 }
