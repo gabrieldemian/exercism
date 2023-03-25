@@ -27,14 +27,14 @@ impl<'a> TeamData<'a> {
 type Teams<'a> = HashMap<&'a str, TeamData<'a>>;
 
 pub fn tally(match_results: &str) -> String {
-    let mut header = "Team                           | MP |  W |  D |  L |  P".to_string();
+    let header = "Team                           | MP |  W |  D |  L |  P".to_string();
     if match_results.is_empty() {
         return header.to_string();
     };
 
     let mut list: Teams = HashMap::new();
 
-    for line in match_results.lines() {
+    match_results.lines().fold(header, |panel, line| {
         let t: Vec<&str> = line.split(';').collect();
         let (subj, target, action) = (t[0], t[1], t[2]);
 
@@ -66,9 +66,17 @@ pub fn tally(match_results: &str) -> String {
         };
         subj_data.mp += 1;
         target_data.mp += 1;
-    }
 
-    println!("{:#?}", list);
-
-    header.to_string()
+        panel
+            + format!(
+                "{subj} |  {} |  {} |  {} |  {}|  {}",
+                subj_data.mp, subj_data.w, subj_data.d, subj_data.l, subj_data.p
+            )
+            .as_str()
+            + format!(
+                "{target} |  {} |  {} |  {} |  {}|  {}",
+                target_data.mp, target_data.w, target_data.d, target_data.l, target_data.p
+            )
+            .as_str()
+    })
 }
