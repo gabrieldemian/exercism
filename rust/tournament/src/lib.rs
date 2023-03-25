@@ -27,18 +27,18 @@ impl<'a> TeamData<'a> {
 type Teams<'a> = HashMap<&'a str, TeamData<'a>>;
 
 pub fn tally(match_results: &str) -> String {
-    let header = "Team                           | MP |  W |  D |  L |  P".to_string();
+    let mut header = "Team                           | MP |  W |  D |  L |  P".to_string();
     if match_results.is_empty() {
         return header.to_string();
     };
 
     let mut list: Teams = HashMap::new();
 
-    match_results.lines().fold(header, |panel, line| {
+    match_results.lines().for_each(|line| {
         let t: Vec<&str> = line.split(';').collect();
         let (subj, target, action) = (t[0], t[1], t[2]);
 
-        [subj, target].iter().for_each(|v| {
+        [subj, target].into_iter().for_each(|v| {
             let data = list.get_mut(v);
             if let None = data {
                 list.insert(v, TeamData::new(v));
@@ -60,23 +60,30 @@ pub fn tally(match_results: &str) -> String {
             }
             "draw" => {
                 target_data.p += 1;
-                target_data.p += 1;
+                subj_data.p += 1;
+                target_data.d += 1;
+                subj_data.d += 1;
             }
             _ => {}
         };
+
         subj_data.mp += 1;
         target_data.mp += 1;
+    });
 
-        panel
+    for (_, data) in list.into_iter() {
+        let mut name = [" "; 31].join("");
+        name.replace_range(..data.name.len(), data.name);
+
+        header = header
+            + "\n"
+            + name.as_str()
             + format!(
-                "{subj} |  {} |  {} |  {} |  {}|  {}",
-                subj_data.mp, subj_data.w, subj_data.d, subj_data.l, subj_data.p
+                "|  {} |  {} |  {} |  {} |  {}",
+                data.mp, data.w, data.d, data.l, data.p
             )
-            .as_str()
-            + format!(
-                "{target} |  {} |  {} |  {} |  {}|  {}",
-                target_data.mp, target_data.w, target_data.d, target_data.l, target_data.p
-            )
-            .as_str()
-    })
+            .as_str();
+    }
+
+    header
 }
