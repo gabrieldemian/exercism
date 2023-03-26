@@ -1,5 +1,5 @@
 #![feature(map_many_mut)]
-use std::collections::HashMap;
+use std::{cmp::Ordering, collections::HashMap};
 
 #[derive(Clone, Debug, Eq, PartialEq)]
 pub struct TeamData<'a> {
@@ -21,6 +21,18 @@ impl<'a> TeamData<'a> {
             l: 0,
             p: 0,
         }
+    }
+}
+
+impl<'a> PartialOrd for TeamData<'a> {
+    fn partial_cmp(&self, other: &Self) -> Option<Ordering> {
+        other.p.partial_cmp(&self.p)
+    }
+}
+
+impl<'a> Ord for TeamData<'a> {
+    fn cmp(&self, other: &Self) -> std::cmp::Ordering {
+        other.p.cmp(&self.p)
     }
 }
 
@@ -71,7 +83,11 @@ pub fn tally(match_results: &str) -> String {
         target_data.mp += 1;
     });
 
-    for (_, data) in list.into_iter() {
+    let mut sorted = list.clone().into_iter().map(|d| d.1).collect::<Vec<_>>();
+    sorted.sort();
+
+    for data in sorted {
+        println!("I am first {}", data.name);
         let mut name = [" "; 31].join("");
         name.replace_range(..data.name.len(), data.name);
 
