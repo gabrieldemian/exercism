@@ -83,8 +83,15 @@ pub fn tally(match_results: &str) -> String {
         target_data.mp += 1;
     });
 
-    let mut sorted = list.clone().into_iter().map(|d| d.1).collect::<Vec<_>>();
+    let mut sorted = list.into_iter().map(|d| d.1).collect::<Vec<_>>();
     sorted.sort();
+
+    let is_tie = sorted[0].p == sorted[1].p;
+
+    if is_tie {
+        println!("is tie for ");
+        sorted.sort_by_key(|a| a.name.to_lowercase());
+    }
 
     for data in sorted {
         println!("I am first {}", data.name);
