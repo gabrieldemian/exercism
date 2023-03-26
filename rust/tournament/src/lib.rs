@@ -89,12 +89,10 @@ pub fn tally(match_results: &str) -> String {
     let is_tie = sorted[0].p == sorted[1].p;
 
     if is_tie {
-        println!("is tie for ");
-        sorted.sort_by_key(|a| a.name.to_lowercase());
+        sorted.sort_by(|a, b| b.p.cmp(&a.p).then(a.name.cmp(&b.name)));
     }
 
     for data in sorted {
-        println!("I am first {}", data.name);
         let mut name = [" "; 31].join("");
         name.replace_range(..data.name.len(), data.name);
 
