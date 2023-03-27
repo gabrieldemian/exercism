@@ -5,56 +5,70 @@ pub fn count(lines: &[&str]) -> u32 {
         return 0 as u32;
     };
 
-    let mut matrix: Vec<Item> = vec![];
-    let mut valid_x: Vec<Item> = vec![];
+    //    matrix[x][y] or matrix[row][col]
+    let mut matrix: Vec<Vec<Item>> = vec![];
 
     lines.into_iter().enumerate().for_each(|(row, v)| {
+        matrix.push(vec![]);
         v.chars().enumerate().for_each(|(col, c)| {
-            if c == '+' || c == '-' || c == '|' {
-                matrix.push((c, row, col));
-            };
+            matrix[row].push((c, row, col));
         });
     });
 
-    let only_x: Vec<Item> = matrix.into_iter().filter(|c| c.0 == '+').collect();
+    println!("matrix {:?}", matrix);
 
-    'row: for (row, row_t) in only_x.iter().enumerate() {
-        let mut valid_xs: Vec<Item> = vec![row_t.clone()];
-        println!("curr row_t {:?}", row_t);
+    let m_iter = matrix.into_iter().enumerate();
 
-        for (y, col_t) in only_x.clone().into_iter().enumerate() {
-            if y == row || valid_xs.contains(&col_t) {
-                continue;
-            }
-            println!("curr col_t {:?}", col_t);
-            match valid_xs.len() {
-                1 => {
-                    if col_t.1 == valid_xs[0].1 || col_t.2 == valid_xs[0].2 {
-                        valid_xs.push(col_t);
-                        println!("inside 1 if valid_xs {:?}", valid_xs);
-                    }
-                }
-                2 => {
-                    if col_t.2 == valid_xs[0].2 || col_t.2 == valid_xs[1].2 {
-                        valid_xs.push(col_t);
-                        println!("inside 2 if valid_xs {:?}", valid_xs);
-                    }
-                }
-                3 => {
-                    if col_t.1 == valid_xs[2].1 {
-                        valid_xs.push(col_t);
-                        println!("inside 3 if valid_xs {:?}", valid_xs);
-                        valid_x.append(&mut valid_xs);
-                        println!("breaking loop");
-                        break 'row;
-                    }
-                }
-                _ => {}
+    let mut candidates: Vec<Item> = vec![];
+
+    for (_r, row) in m_iter {
+        let mut prev_col: Option<Item> = None;
+
+        for col_data in row {
+            let (symbol, row, col) = col_data;
+            println!("curr {:?}", col_data);
+            println!("prev {:?}", prev_col);
+
+            if symbol == '+' {
+                candidates.push(col_data);
             };
+
+            if col == 0 {
+                prev_col = Some(col_data);
+                continue;
+            };
+
+            if let Some(prev) = prev_col {
+                match prev.0 {
+                    '+' if symbol != '-' && symbol != '+' => {
+                        candidates.remove(row + col);
+                    }
+                    '-' if symbol == ' ' => {
+                        candidates.remove(row + col);
+                    }
+                    ' ' if symbol == '-' => {
+                        candidates.remove(row + col);
+                    }
+                    _ => {}
+                };
+            }
+            println!("candidates {:?}", candidates);
+            prev_col = Some(col_data);
         }
     }
 
-    println!("valid xs: {:?}", valid_x);
+    for all in candidates.windows(4).into_iter() {
+        let (a, b, c, d) = (all[0], all[1], all[2], all[3]);
+        // all cols from a to b -> are -
+        // all cols from a to c \/ are |
+        // all cols from c -> d are |
+
+        for col in a.2..=b.2 {
+            // matrix[a.1]
+        }
+
+        println!("all {:?}", all);
+    }
 
     // 0 - parse chars into the matrix
     //
@@ -69,7 +83,7 @@ pub fn count(lines: &[&str]) -> u32 {
     // 2. on each R, each char must be a - (except for the +)
     // 3. on each C, each char must be a | (except for the +)
     //
-    // alternative solution? O(2^n)
+    // alternative solution?
     // the 4th tuple RC is always the largest of the previous
     // 1. get all the valid xs edges into subarrays
     // 2. 2nd tuple must have same C or R as 1st
@@ -91,5 +105,7 @@ pub fn count(lines: &[&str]) -> u32 {
     // (2,0) (2,2) (2,4)
     // (4,0) (4,2) (4,4)
 
-    (valid_x.iter().count() as i32 / 4) as u32
+    // let n = (candidates.iter().count() / 4) as f64;
+    // n.floor() as u32
+    0 as u32
 }
