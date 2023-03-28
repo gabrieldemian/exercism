@@ -7,6 +7,7 @@ pub fn count(lines: &[&str]) -> u32 {
 
     //    matrix[x][y] or matrix[row][col]
     let mut matrix: Vec<Vec<Item>> = vec![];
+    let mut n: u32 = 0;
 
     lines.into_iter().enumerate().for_each(|(row, v)| {
         matrix.push(vec![]);
@@ -17,7 +18,7 @@ pub fn count(lines: &[&str]) -> u32 {
 
     println!("matrix {:?}", matrix);
 
-    let m_iter = matrix.into_iter().enumerate();
+    let m_iter = matrix.clone().into_iter().enumerate();
 
     let mut candidates: Vec<Item> = vec![];
 
@@ -25,7 +26,7 @@ pub fn count(lines: &[&str]) -> u32 {
         let mut prev_col: Option<Item> = None;
 
         for col_data in row {
-            let (symbol, row, col) = col_data;
+            let (symbol, _row, col) = col_data;
             println!("curr {:?}", col_data);
             println!("prev {:?}", prev_col);
 
@@ -38,37 +39,56 @@ pub fn count(lines: &[&str]) -> u32 {
                 continue;
             };
 
-            if let Some(prev) = prev_col {
-                match prev.0 {
-                    '+' if symbol != '-' && symbol != '+' => {
-                        candidates.remove(row + col);
-                    }
-                    '-' if symbol == ' ' => {
-                        candidates.remove(row + col);
-                    }
-                    ' ' if symbol == '-' => {
-                        candidates.remove(row + col);
-                    }
-                    _ => {}
-                };
-            }
             println!("candidates {:?}", candidates);
             prev_col = Some(col_data);
         }
     }
 
+    fn validate_cols(from: Item, to: Item, matrix: &Vec<Vec<Item>>) -> bool {
+        let row = matrix.get(from.1);
+        if let Some(row) = row {
+            println!("\nvalidating cols from {:?} to {:?}", from, to);
+            let is_valid = row.iter().all(|v| v.0 == '-' || v.0 == '+');
+            println!("\tthe cols are valid? {:?}", is_valid);
+            return is_valid;
+        }
+        false
+    }
+
+    fn validate_rows(from: Item, to: Item, matrix: &Vec<Vec<Item>>) -> bool {
+        let rows = matrix.get(from.1..=to.1);
+        println!("\nvalidating cols in range {:?}", rows);
+        if let Some(rows) = rows {
+            let is_valid = rows.iter().all(|v| v[to.1].0 == '|' || v[to.1].0 == '+');
+            println!("\tthe rows are valid? {:?}", is_valid);
+            return is_valid;
+        }
+        false
+    }
+
     for all in candidates.windows(4).into_iter() {
         let (a, b, c, d) = (all[0], all[1], all[2], all[3]);
-        // all cols from a to b -> are -
-        // all cols from a to c \/ are |
-        // all cols from c -> d are |
 
-        for col in a.2..=b.2 {
-            // matrix[a.1]
-        }
+        println!("a is: {:?}", a);
+        println!("b is: {:?}", b);
+        println!("c is: {:?}", c);
+        println!("d is: {:?}", d);
 
-        println!("all {:?}", all);
+        let valid_rectangle = [
+            validate_cols(a, b, &matrix),
+            validate_rows(a, c, &matrix),
+            validate_cols(c, d, &matrix),
+            validate_rows(b, d, &matrix),
+        ]
+        .into_iter()
+        .all(|b| b);
+
+        if valid_rectangle {
+            n += 1
+        };
     }
+
+    println!("squares: {n}");
 
     // 0 - parse chars into the matrix
     //
@@ -107,5 +127,6 @@ pub fn count(lines: &[&str]) -> u32 {
 
     // let n = (candidates.iter().count() / 4) as f64;
     // n.floor() as u32
+    println!("\n");
     0 as u32
 }
