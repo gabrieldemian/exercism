@@ -7,7 +7,6 @@ pub fn count(lines: &[&str]) -> u32 {
 
     //    matrix[x][y] or matrix[row][col]
     let mut matrix: Vec<Vec<Item>> = vec![];
-    let mut n: u32 = 0;
 
     lines.into_iter().enumerate().for_each(|(row, v)| {
         matrix.push(vec![]);
@@ -18,32 +17,51 @@ pub fn count(lines: &[&str]) -> u32 {
 
     println!("matrix {:?}", matrix);
 
-    'outer: for (i, row) in matrix.iter().enumerate() {
-        let crosses: Vec<_> = row.iter().filter(|a| a.0 == '+').collect();
-        println!("the line {:?} has {:?} crosses", row, crosses.len());
-        if crosses.len() == 0 {
-            continue;
+    // validate rectangles recursively given a Vec
+    // of Items and the number of edges.
+    fn validate_rectangles(matrix: &Vec<Vec<Item>>, row_i: usize, valid_rectangles: u32) -> u32 {
+        let row = matrix.get(row_i);
+        let next_row = matrix.get(row_i + 1);
+
+        if row.is_none() || next_row.is_none() {
+            return valid_rectangles;
         }
 
-        'inner: for (y, c) in crosses.windows(crosses.len()).enumerate() {
-            let left = c[0];
-            let right = c[1];
-            println!("my new left {:?}", left);
-            println!("my new right {:?}", right);
+        let row_has_cross = matrix[row_i].iter().any(|a| a.0 == '+');
+
+        if !row_has_cross {
+            return validate_rectangles(matrix, row_i + 1, valid_rectangles);
+        }
+
+        // this row already contains a cross
+        let row = matrix[row_i].clone();
+        let mut valid_rectangles = valid_rectangles;
+
+        println!("row: {:?}\n", row);
+        println!("row_i: {row_i}\n");
+
+        let crosses: Vec<_> = row.iter().filter(|c| c.0 == '+').collect();
+        let edges = crosses.len();
+        println!("\nedges: {edges}");
+
+        for (i, c) in crosses.windows(edges).enumerate() {
+            let left = c.first().unwrap();
+            let right = c.last().unwrap();
+
+            println!("left {:?}", left);
+            println!("right {:?}", right);
 
             let is_first_row_valid = row
                 .clone()
-                .drain(left.2..c.last().unwrap().2)
+                .drain(left.2..right.2)
                 .all(|p| p.0 == '+' || p.0 == '-');
 
-            println!("first row is {:?}", row);
+            println!("row {:?}", row);
+            println!("\tis_valid? {:?}", is_first_row_valid);
 
             if !is_first_row_valid {
                 continue;
             }
-
-            println!("\tis_valid? {:?}", is_first_row_valid);
-
             let last_row = matrix
                 .iter()
                 .skip(i + 1)
@@ -60,7 +78,9 @@ pub fn count(lines: &[&str]) -> u32 {
                     .clone()
                     .drain(left.2..right.2)
                     .all(|c| c.0 == '+' || c.0 == '-');
+
                 println!("\tis valid? {:?}", is_valid);
+
                 if !is_valid {
                     continue;
                 }
@@ -81,16 +101,20 @@ pub fn count(lines: &[&str]) -> u32 {
                     }
                     _ => {
                         println!("\tsides are not valid");
-                        continue 'inner;
+                        continue;
                     }
                 }
             }
 
             println!("\tsides are valid");
-
-            n += 1;
+            valid_rectangles += 1;
+            println!("valid_rectangles {valid_rectangles}");
         }
+
+        validate_rectangles(matrix, row_i + 1, valid_rectangles)
     }
+
+    let n = validate_rectangles(&matrix, 0, 0);
 
     println!("\tsquares: {n}");
 
