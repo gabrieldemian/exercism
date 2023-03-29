@@ -18,74 +18,80 @@ pub fn count(lines: &[&str]) -> u32 {
 
     println!("matrix {:?}", matrix);
 
-    let m_iter = matrix.clone().into_iter().enumerate();
-
-    let mut candidates: Vec<Item> = vec![];
-
-    for (_r, row) in m_iter {
-        let mut prev_col: Option<Item> = None;
-
-        for col_data in row {
-            let (symbol, _row, col) = col_data;
-            println!("curr {:?}", col_data);
-            println!("prev {:?}", prev_col);
-
-            if symbol == '+' {
-                candidates.push(col_data);
-            };
-
-            if col == 0 {
-                prev_col = Some(col_data);
-                continue;
-            };
-
-            println!("candidates {:?}", candidates);
-            prev_col = Some(col_data);
-        }
-    }
-
-    fn validate_cols(from: Item, to: Item, matrix: &Vec<Vec<Item>>) -> bool {
-        let row = matrix.get(from.1);
-        if let Some(row) = row {
-            println!("\nvalidating cols from {:?} to {:?}", from, to);
-            let is_valid = row.iter().all(|v| v.0 == '-' || v.0 == '+');
-            println!("\tthe cols are valid? {:?}", is_valid);
-            return is_valid;
-        }
-        false
-    }
-
-    fn validate_rows(from: Item, to: Item, matrix: &Vec<Vec<Item>>) -> bool {
-        let rows = matrix.get(from.1..=to.1);
-        println!("\nvalidating cols in range {:?}", rows);
-        if let Some(rows) = rows {
-            let is_valid = rows.iter().all(|v| v[to.1].0 == '|' || v[to.1].0 == '+');
-            println!("\tthe rows are valid? {:?}", is_valid);
-            return is_valid;
-        }
-        false
-    }
-
-    for all in candidates.windows(4).into_iter() {
-        let (a, b, c, d) = (all[0], all[1], all[2], all[3]);
-
-        println!("a is: {:?}", a);
-        println!("b is: {:?}", b);
-        println!("c is: {:?}", c);
-        println!("d is: {:?}", d);
-
-        let valid_rectangle = [
-            validate_cols(a, b, &matrix),
-            validate_rows(a, c, &matrix),
-            validate_cols(c, d, &matrix),
-            validate_rows(b, d, &matrix),
-        ]
-        .into_iter()
-        .all(|b| b);
-
-        if valid_rectangle {
-            n += 1
+    'outer: for (i, row) in matrix.iter().enumerate() {
+        let left = row.iter().find(|a| a.0 == '+');
+        if left.is_none() {
+            continue;
         };
+
+        // find pair of + on the curr row
+        let left = left.unwrap();
+        let right = row.iter().skip(left.2 + 1).find(|a| a.0 == '+');
+
+        if right.is_none() {
+            continue;
+        };
+
+        let right = right.unwrap();
+
+        let is_first_row_valid = row
+            .clone()
+            .drain(left.2..right.2)
+            .all(|p| p.0 == '+' || p.0 == '-');
+
+        println!("first row is {:?}", row);
+
+        if !is_first_row_valid {
+            continue;
+        }
+
+        println!("\tis_valid? {:?}", is_first_row_valid);
+
+        let last_row = matrix
+            .iter()
+            .skip(i + 1)
+            .find(|r| r[left.2].0 == '+' || r[right.2].0 == '+');
+
+        println!("last row is {:?}", last_row);
+
+        if last_row.is_none() {
+            continue;
+        }
+
+        if let Some(last_row) = last_row {
+            let is_valid = last_row
+                .clone()
+                .drain(left.2..right.2)
+                .all(|c| c.0 == '+' || c.0 == '-');
+            println!("\tis valid? {:?}", is_valid);
+            if !is_valid {
+                continue;
+            }
+        }
+
+        println!("about to validate left {:?}", left);
+        println!("about to validate right {:?}", right);
+
+        // validate sides of the rectangle,
+        // return the last row
+        for row in matrix.iter().skip(i + 1) {
+            println!("\tside left {:?}", row[left.2]);
+            println!("\tside right {:?}", row[right.2]);
+            match (row[left.2].0, row[right.2].0) {
+                ('|', '|') => {}
+                ('+', '+') => {
+                    break;
+                }
+                _ => {
+                    println!("\tsides are not valid");
+                    continue 'outer;
+                }
+            }
+        }
+
+        println!("\tsides are valid");
+
+        n += 1;
     }
 
     println!("squares: {n}");
@@ -125,8 +131,6 @@ pub fn count(lines: &[&str]) -> u32 {
     // (2,0) (2,2) (2,4)
     // (4,0) (4,2) (4,4)
 
-    // let n = (candidates.iter().count() / 4) as f64;
-    // n.floor() as u32
     println!("\n");
     0 as u32
 }
